@@ -12,7 +12,7 @@
 ;     \___\___/|_| |_|_| |_|\__, |        
 ;                            _/ |
 ;                          |___/    
-version := "26.3"
+version := "26.5"
 ; Consult the keylist for correct syntax: https://www.autohotkey.com/docs/v2/KeyList.htm
 
 
