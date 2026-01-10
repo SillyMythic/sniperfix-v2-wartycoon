@@ -12,23 +12,29 @@
 ;     \___\___/|_| |_|_| |_|\__, |        
 ;                            _/ |
 ;                          |___/    
-version := "26.4"
+version := "26.3"
 ; Consult the keylist for correct syntax: https://www.autohotkey.com/docs/v2/KeyList.htm
 
 
 ; Config:                                Description:                                               Example:
 
 whitelistedKeys := [3, 4, 6]             ; Number keys corresponding to the slots of your snipers   [1, 2, ...]
+shieldKey := 5                           ; Needed for autoShield                                    (5)
 requireCenteredCursor := true            ; Only works in first person (requires fullscreen)         (true/false)
 
-macroBind := "RButton"                   ; Keybind for macro                                        "key"
+sniperBind := "RButton"                  ; Keybind for sniper macro                                 "key"
+autoShield := false                      ; Automatically shield after shooting                      (true/false)
+grenadeBind := ""                       ; Keybind for grenade dropping macro                       "key"
 exitBind := "Home"                       ; Keybind to exit the script                               "key"
 
+quickReset := false                      ; Automatically reset when conditions are met              (true/false)
+
 updateCheck := true                      ; Check for updates on startup                             (true/false)
+archiveNotification := true              ; Show archive notification on startup                     (true/false)
 
 bufferDelay := 1                         ; Increment by 1ms if experiencing issues with macro       (ms)
 equipDelay := 1150                       ; Prevents accidental clicks when equipping weapon         (ms)
-chamberDelay := 100                      ; Prevents double clicks between shots                     (ms)
+chamberDelay := 200                      ; Prevents double clicks between shots                     (ms)
 
 windowName := "Roblox"                   ; Macro will only execute in this application(s)           "Roblox, Roblox Studio, ..."
 ; ______________________________________________________________________________________________________________
@@ -42,9 +48,14 @@ global bg := "08060a"
 
 tride.notify("Sniperfix Initialized.", 1500)
 
+CoordMode "Pixel", "Screen"
+CoordMode "Mouse", "Screen"
+
 lastNumber := ""
 lastNumberTime := 0
 lastMacroTime := 0
+lastGrenade := 0
+lastZTime := 0
 centerWidth := A_ScreenWidth / 2
 centerHeight := A_ScreenHeight / 2
 latestChangelog := ""
@@ -173,12 +184,23 @@ for arg in A_Args {
 }
 
 if (isFirstTimeOpening) {
-    tride.notify("Sniperfix has been updated to v" version "!", 10000)
+    tride.notify("Sniperfix has been updated to v" version "! Click to view changelog!", 10000, (*) => (
+        Run("https://github.com/SillyMythic/sniperfix-v2-wartycoon/releases")
+    ))
 }
 
+if (archiveNotification) {
+    tride.notify("⚠️ Sniperfix has been archived and discontinued. This is due to recent ROBLOX updates that have demotivated me from maintaining this script.`n`nClick to view other projects I work on.", 10000, (*) => (
+        Run("https://github.com/SillyMythic")
+    ))
+}
 
 if updateCheck {
     checkForUpdates()
+}
+
+if quickReset {
+    SetTimer(doQuickReset, 100)
 }
 
 
@@ -209,9 +231,12 @@ isWhitelisted(key) {
             return true
     return false
 }
-#HotIf WinActive(windowName)
-Hotkey("~" . macroBind, (*) => Macro())
-#HotIf
+
+HotIfWinActive windowName
+Hotkey("~" . sniperBind, (*) => Sniper())
+Hotkey("*~" . grenadeBind, (*) => Grenade())
+HotIf
+
 Hotkey(exitBind, exit)
 exit(*) {
     tride.notify("Exiting Sniperfix.", 1000)
@@ -219,8 +244,11 @@ exit(*) {
     ExitApp()
 }
 
-Macro() {
-    global lastNumberTime, lastMacroTime, lastNumber, requireCenteredCursor, isWhitelisted, equipDelay, chamberDelay, macroBind, centerWidth, centerHeight
+if (autoShield) {
+    tride.notify("Autoshield is enabled. this feature is still incomplete, expect issues.", 10000)
+}
+Sniper() {
+    global lastNumberTime, lastMacroTime, lastNumber, requireCenteredCursor, isWhitelisted, equipDelay, chamberDelay, sniperBind, centerWidth, centerHeight
     if (A_TickCount - lastNumberTime < equipDelay
         || A_TickCount - lastMacroTime < chamberDelay
         || !isWhitelisted(lastNumber))
@@ -232,14 +260,65 @@ Macro() {
             return
     }
 
-    if (macroBind != "RButton")
+    if (sniperBind != "RButton") {
         SendInput "{RButton}"
+    }
 
     SendInput "{LButton}"
     Sleep(bufferDelay)
     SendInput lastNumber . lastNumber
 
+    if (autoShield) {
+        SendInput shieldKey
+        Sleep(100)
+        SendInput lastNumber
+    }
+
+    
     lastMacroTime := A_TickCount
+}
+
+Grenade() {
+    global lastGrenade, lastZTime
+    
+    if (A_TickCount - lastZTime < 1000) {
+        SendInput "{9}"
+        Sleep(10)
+        SendInput "{LButton}"
+        Sleep(30)
+        SendInput "{0}"
+        Sleep(10)
+        SendInput "{LButton}"
+        Sleep(30)
+        SendInput "{0}"
+        
+    if (autoShield)
+        SendInput shieldKey
+
+        if (A_TickCount - lastGrenade > 10000) {
+            tride.notify("Dropping grenades.", 1000)
+            lastGrenade := A_TickCount
+        }
+        lastZTime := 0
+    } else {
+        lastZTime := A_TickCount
+    }
+}
+
+doQuickReset() {
+    global quickReset, windowName
+    if (!quickReset || !WinActive(windowName))
+        return
+
+    if (PixelGetColor(815, 995) = "0x12DC12" && PixelGetColor(1090, 995) = "0x12DC12") {
+        tride.notify("Quick resetting.", 1000)
+        Send "{Escape}"
+        Sleep(10)
+        Send "{R}"
+        Sleep(300)
+        Send "{Enter}"
+        Sleep(1000)
+    }
 }
 
 class tride {
@@ -280,7 +359,7 @@ class tride {
     }
 
     static notify(message, lifetime := 3000, action := "") {
-        width := 350, height := 75, barThickness := 8
+        width := 350, barThickness := 8
         window := Gui("+AlwaysOnTop -Caption +ToolWindow")
         window.BackColor := bg
         
@@ -291,10 +370,17 @@ class tride {
         
         window.SetFont("s11 c" (isClickable ? accent : text) " Bold", font)
         label := window.Add("Text", "Left x15 y18 w" (width - 70), message)
+        label.GetPos(,,,&labelH)
+        
+        ; Minimum height of 75, but grows if text is long
+        height := Max(75, 18 + labelH + 15 + barThickness)
         
         progressBar := window.Add("Progress", "x-1 y" (height - barThickness) " w" (width + 1) " h" barThickness " +Smooth c" accent " Background" bg, 100)
         
-        yOffset := 20 + (this.queue.Length * 80)
+        yOffset := 20
+        for item in this.queue
+            yOffset += item.height + 5
+
         window.Show("x" (A_ScreenWidth - width - 20) " y" yOffset " w" width " h" height " NoActivate")
         RoundCorners(window.Hwnd)
         
@@ -302,7 +388,8 @@ class tride {
             window: window,
             bar: progressBar,
             lifetime: lifetime,
-            startedAt: 0
+            startedAt: 0,
+            height: height
         }
         
         this.queue.Push(notification)
@@ -331,9 +418,10 @@ class tride {
         try this.queue[index].window.Destroy()
         this.queue.RemoveAt(index)
         
+        currentY := 20
         for i, item in this.queue {
-            yOffset := 20 + ((i - 1) * 80)
-            item.window.Show("x" (A_ScreenWidth - 370) " y" yOffset " NoActivate")
+            item.window.Show("x" (A_ScreenWidth - 370) " y" currentY " NoActivate")
+            currentY += item.height + 5
         }
         
         if !this.queue.Length
