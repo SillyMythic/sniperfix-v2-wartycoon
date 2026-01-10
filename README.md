@@ -1,7 +1,8 @@
 <p align="center">
 <a href= "https://github.com/SillyMythic/sniperfix-v2-wartycoon/blob/main/LICENSE"><img alt="Static Badge" src="https://img.shields.io/badge/LICENSE-UnLicense-White?style=for-the-badge&logo=github&color=white"></a>
-<a href= "https://github.com/SillyMythic/sniperfix-v2-wartycoon/releases"><img alt="Static Badge" src="https://img.shields.io/badge/RELEASE-v26.4-White?style=for-the-badge&color=white"></a>
+<a href= "https://github.com/SillyMythic/sniperfix-v2-wartycoon/releases"><img alt="Static Badge" src="https://img.shields.io/badge/RELEASE-v26.5-White?style=for-the-badge&color=white"></a>
 <a href= "https://www.autohotkey.com"><img alt="Static Badge" src="https://img.shields.io/badge/MADE%20WITH-AHK-White?style=for-the-badge&color=white"></a>
+<a href= "https://github.com/SillyMythic/sniperfix-v2-wartycoon/"><img alt="Static Badge" src="https://img.shields.io/badge/Archived-Blue?style=for-the-badge&color=yellow"></a>
 </p>
 
 <p align="center">
